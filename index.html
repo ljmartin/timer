@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    text-align: center;
+  }
+  .container { max-width: 600px; padding: 2rem; }
+  h1 { font-size: 1.5rem; font-weight: 300; color: #888; margin-bottom: 2rem; }
+  .age-display { font-size: 2.2rem; font-weight: 300; line-height: 1.6; }
+  .age-display .number { font-weight: 700; color: #64ffda; }
+  .age-display .unit { color: #aaa; font-size: 1.4rem; }
+  .live-timer { margin-top: 2rem; font-size: 1rem; color: #666; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>👶 Time </h1>
+  <div class="age-display" id="ageDisplay"></div>
+  <div class="live-timer" id="liveTimer"></div>
+</div>
+
+<script>
+const startDate = new Date("2026-06-16T23:22:00Z");
+
+function calculateAge(start, now) {
+  // Work entirely in UTC to avoid DST issues
+  let years = now.getUTCFullYear() - start.getUTCFullYear();
+  let months = now.getUTCMonth() - start.getUTCMonth();
+  let days = now.getUTCDate() - start.getUTCDate();
+  let hours = now.getUTCHours() - start.getUTCHours();
+  let minutes = now.getUTCMinutes() - start.getUTCMinutes();
+  let seconds = now.getUTCSeconds() - start.getUTCSeconds();
+
+  // Borrow from higher units if negative
+  if (seconds < 0) { seconds += 60; minutes--; }
+  if (minutes < 0) { minutes += 60; hours--; }
+  if (hours < 0)   { hours += 24; days--; }
+  if (days < 0) {
+    // Days in the *previous* month (relative to now)
+    const prevMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0));
+    days += prevMonth.getUTCDate();
+    months--;
+  }
+  if (months < 0) { months += 12; years--; }
+
+  // Calculate total weeks (from raw milliseconds, UTC)
+  const totalMs = now - start;
+  const totalWeeks = Math.floor(totalMs / (1000 * 60 * 60 * 24 * 7));
+  const totalDays = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+
+  return { years, months, days, hours, minutes, seconds, totalWeeks, totalDays };
+}
+function updateDisplay() {
+  const now = new Date();
+  const age = calculateAge(startDate, now);
+
+  const parts = [];
+  parts.push(`<span class="number">${age.years}</span> <span class="unit">year${age.years !== 1 ? 's' : ''}</span>`);
+  parts.push(`<span class="number">${age.months}</span> <span class="unit">month${age.months !== 1 ? 's' : ''}</span>`);
+  parts.push(`<span class="number">${age.days}</span> <span class="unit">day${age.days !== 1 ? 's' : ''}</span>`);
+    parts.push(`<span class="number">${age.hours}</span> <span class="unit">hour${age.hours !== 1 ? 's' : ''}</span>`);
+    parts.push(`<span class="number">${age.minutes}</span> <span class="unit">minute${age.minutes !== 1 ? 's' : ''}</span>`);
+    parts.push(`<span class="number">${age.seconds}</span> <span class="unit">second${age.seconds !== 1 ? 's' : ''}</span>`);
+
+  document.getElementById('ageDisplay').innerHTML = parts.join(', ');
+		}
+		
+
+// Update immediately, then every second
+updateDisplay();
+setInterval(updateDisplay, 1000);
+</script>
+</body>
+</html>
